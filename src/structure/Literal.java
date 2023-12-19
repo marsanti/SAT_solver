@@ -1,5 +1,7 @@
 package structure;
 
+import java.util.Objects;
+
 public class Literal {
 
     private int lit;
@@ -26,6 +28,10 @@ public class Literal {
         this.positive = positive;
     }
 
+    public boolean getPositive() {
+        return this.positive;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -37,5 +43,13 @@ public class Literal {
         str.append("X").append(this.lit);
 
         return str.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Literal)) return false;
+        Literal literal = (Literal) o;
+        return this.lit == literal.lit && this.positive == literal.positive;
     }
 }
