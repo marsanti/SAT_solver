@@ -52,7 +52,22 @@ public class Formula {
                 occurrences.put(l, occurrences.getOrDefault(l, 0) + 1);
             }
         }
-        return occurrences;
+
+        return sortByOccurrences(occurrences);
+    }
+
+    private static Map<Literal, Integer> sortByOccurrences(Map<Literal, Integer> map) {
+        List<Map.Entry<Literal, Integer>> list = new LinkedList<>(map.entrySet());
+
+        // Sort the list based on values
+        list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        Map<Literal, Integer> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<Literal, Integer> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+
+        return sortedMap;
     }
 
     @Override

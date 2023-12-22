@@ -21,6 +21,16 @@ public class Clause {
         return this.literals.contains(l);
     }
 
+    public ArrayList<Literal> getUndefinedLiterals(ArrayList<Literal> model) {
+        ArrayList<Literal> undefinedLiterals = new ArrayList<>();
+        for(Literal l : this.literals) {
+            if(!model.contains(l)) {
+                undefinedLiterals.add(l);
+            }
+        }
+        return undefinedLiterals;
+    }
+
     @Override
     public String toString()
     {

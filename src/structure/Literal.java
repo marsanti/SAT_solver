@@ -4,8 +4,8 @@ import java.util.Objects;
 
 public class Literal {
 
-    private int lit;
-    private boolean positive;
+    private final int lit;
+    private final boolean positive;
 
     public Literal(int lit, boolean positive) {
         this.lit = lit;
@@ -18,18 +18,6 @@ public class Literal {
 
     public int getLit() {
         return this.lit;
-    }
-
-    public void setLit(int lit) {
-        this.lit = lit;
-    }
-
-    public void setPositive(boolean positive) {
-        this.positive = positive;
-    }
-
-    public boolean getPositive() {
-        return this.positive;
     }
 
     @Override
@@ -51,5 +39,10 @@ public class Literal {
         if (!(o instanceof Literal)) return false;
         Literal literal = (Literal) o;
         return this.lit == literal.lit && this.positive == literal.positive;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lit, positive);
     }
 }
