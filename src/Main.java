@@ -19,6 +19,7 @@ public class Main {
 //
 //        System.out.println("F = " + formula);
         Formula f = Utils.readFormulaFromFile("tests/test1.cnf");
+        System.out.println(f.getLiteralOccurrences());
         CDCL solver = new CDCL(f);
         solver.findModel();
     }

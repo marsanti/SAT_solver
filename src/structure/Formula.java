@@ -1,6 +1,6 @@
 package structure;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class Formula {
     private ArrayList<Clause> clauses;
@@ -43,6 +43,16 @@ public class Formula {
         }
 
         return lits;
+    }
+
+    public Map<Literal, Integer> getLiteralOccurrences() {
+        Map<Literal, Integer> occurrences = new HashMap<>();
+        for(Clause c : this.clauses) {
+            for(Literal l : c.getLiterals()) {
+                occurrences.put(l, occurrences.getOrDefault(l, 0) + 1);
+            }
+        }
+        return occurrences;
     }
 
     @Override

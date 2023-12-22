@@ -17,6 +17,10 @@ public class Clause {
         this.literals.add(lit);
     }
 
+    public boolean containsLiteral(Literal l) {
+        return this.literals.contains(l);
+    }
+
     @Override
     public String toString()
     {
