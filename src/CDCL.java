@@ -1,6 +1,7 @@
 import structure.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class CDCL {
@@ -8,12 +9,14 @@ public class CDCL {
     private ArrayList<Literal> model;
     private ArrayList<Literal> unitClauses;
     private ArrayList<Literal> decidedLiterals;
+    private Map<Literal, Clause> justification;
 
     public CDCL(Formula f) {
         this.formula = f;
         this.model = new ArrayList<>();
         this.unitClauses = new ArrayList<>();
         this.decidedLiterals = new ArrayList<>();
+        this.justification = new HashMap<>();
     }
 
     private Literal decide() throws Exception {
@@ -43,9 +46,17 @@ public class CDCL {
 
     private void unitPropagate(Literal l) {
         for(Clause c : formula.getClauses()) {
-            ArrayList<Literal> undefLit = c.getUndefinedLiterals(this.model);
-            if(undefLit.size() == 1) {
-                // TODO: add the lit to the model, and map the literal with the clause(the justification)
+            // we need to propagate l, thus only clauses with l negated must be considered
+            Literal lNeg = new Literal(l.getLit(), !(l.isPositive()));
+            if(!c.containsLiteral(lNeg)) continue;
+            ArrayList<Literal> undefLitArray = c.getUndefinedLiterals(this.model);
+            if(undefLitArray.size() == 1) {
+                Literal undefLit = undefLitArray.get(0);
+                Literal undefLitNeg = new Literal(undefLit.getLit(), !(undefLit.isPositive()));
+                if(!(this.model.contains(undefLitNeg))) {
+                    this.model.add(undefLit);
+                    this.justification.put(undefLit, c);
+                }
             }
         }
     }
@@ -97,20 +108,26 @@ public class CDCL {
     public void findModel() {
         try {
             this.unitClauses = this.getUnaryClauses();
+            boolean sat = false;
 
             /* TEST CASE */
-            while(this.model.size() != this.formula.getNumberOfLiterals()) {
+            while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
                 Literal decidedLit = this.decide();
                 if(decidedLit != null) {
                     this.unitPropagate(decidedLit);
                 }
                 Clause conflict = this.checkConflict();
                 if(conflict != null) {
-                    if(this.decidedLiterals.size() == 0) {
+                    System.out.println("Conflict detected: " + conflict);
+                    if(this.decidedLiterals.isEmpty()) {
                         throw new Exception("Conflict at level 0, so NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
                     } else {
-
+                        // TODO explain step
+                        // TODO learn step
                     }
+                } else {
+                    sat = this.formula.isSatisfied(this.model);
+
                 }
             }
             System.out.println("The formula " + this.formula + " is SAT: \nmodel: " + this.model);

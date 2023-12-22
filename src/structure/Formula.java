@@ -70,6 +70,15 @@ public class Formula {
         return sortedMap;
     }
 
+    public boolean isSatisfied(ArrayList<Literal> model) {
+        for(Clause c : this.clauses) {
+            if(!(c.isSatisfied(model))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("F = ");

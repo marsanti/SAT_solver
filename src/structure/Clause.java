@@ -24,11 +24,21 @@ public class Clause {
     public ArrayList<Literal> getUndefinedLiterals(ArrayList<Literal> model) {
         ArrayList<Literal> undefinedLiterals = new ArrayList<>();
         for(Literal l : this.literals) {
-            if(!model.contains(l)) {
+            Literal lNeg = new Literal(l.getLit(), !(l.isPositive()));
+            if(!(model.contains(l) || model.contains(lNeg))) {
                 undefinedLiterals.add(l);
             }
         }
         return undefinedLiterals;
+    }
+
+    public boolean isSatisfied(ArrayList<Literal> model) {
+        for(Literal l : this.literals) {
+            if(model.contains(l)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
