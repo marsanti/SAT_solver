@@ -34,24 +34,26 @@ public class CDCL {
         return null;
     }
 
-    private boolean unitPropagate(Literal l) {
-        boolean prop = false;
-        for(Clause c : formula.getClauses()) {
-            // we need to propagate l, thus only clauses with l negated must be considered
-            Literal notL = l.getNegate();
-            if(!c.containsLiteral(notL)) continue;
-            ArrayList<Literal> undefLitArray = c.getUndefinedLiterals(this.model);
-            if(undefLitArray.size() == 1) {
-                Literal undefLit = undefLitArray.get(0);
-                Literal notUndefLit = undefLit.getNegate();
-                if(!(this.model.contains(notUndefLit))) {
-                    this.model.add(undefLit);
-                    this.justification.put(undefLit, c);
-                    prop = true;
+    private boolean unitPropagate() {
+        boolean changed = false;
+        ArrayList<Literal> model_copy = new ArrayList<>(this.model);
+        for(Literal l : model_copy) {
+            for(Clause c : this.formula.getClauses()) {
+                Literal notL = l.getNegate();
+                if(!c.containsLiteral(notL)) continue;
+                ArrayList<Literal> undefLitArray = c.getUndefinedLiterals(this.model);
+                if(undefLitArray.size() == 1) {
+                    Literal undefLit = undefLitArray.get(0);
+                    Literal notUndefLit = undefLit.getNegate();
+                    if(!(this.model.contains(notUndefLit))) {
+                        this.model.add(undefLit);
+                        this.justification.put(undefLit, c);
+                        changed = true;
+                    }
                 }
             }
         }
-        return prop;
+        return changed;
     }
 
     private ArrayList<Literal> getUnaryClauses() throws Exception {
@@ -138,22 +140,17 @@ public class CDCL {
                 c.addLiteral(l);
                 this.justification.put(l, c);
             }
-            System.out.println(this.model);
-            System.out.println(this.justification);
             boolean sat = false;
 
             /* TEST CASE */
             while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
-                Literal decidedLit = this.decide();
-                if(decidedLit != null) {
-                    this.unitPropagate(decidedLit);
+                if(!this.unitPropagate()) {
+                    this.decide();
                 }
                 Clause conflict = this.checkConflict();
                 if(conflict != null) {
-                    System.out.println("Conflict detected: " + conflict);
-                    System.out.println(this.decidedLiterals);
                     if(this.decidedLiterals.isEmpty()) {
-                        throw new Exception("Conflict at level 0, so NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
+                        throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
                     } else {
                         Clause resolvent = this.explain(conflict);
                         this.learn(resolvent);
