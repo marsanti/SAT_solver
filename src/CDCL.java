@@ -7,58 +7,51 @@ import java.util.Map;
 public class CDCL {
     private Formula formula;
     private ArrayList<Literal> model;
-    private ArrayList<Literal> unitClauses;
     private ArrayList<Literal> decidedLiterals;
     private Map<Literal, Clause> justification;
 
     public CDCL(Formula f) {
         this.formula = f;
         this.model = new ArrayList<>();
-        this.unitClauses = new ArrayList<>();
         this.decidedLiterals = new ArrayList<>();
         this.justification = new HashMap<>();
     }
 
     private Literal decide() throws Exception {
-        if(!this.unitClauses.isEmpty()) {
-            Literal unitLit = this.unitClauses.get(0);
-            this.decidedLiterals.add(unitLit);
-            this.model.add(unitLit);
-            this.unitClauses.remove(0);
-            return unitLit;
-        } else {
-            Map<Literal, Integer> occurrences = this.formula.getLiteralOccurrences();
-            int sizeModel = this.model.size();
-            for(Literal key : occurrences.keySet()) {
-                Literal negateKey = new Literal(key.getLit(), !(key.isPositive()));
-                if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(negateKey))) {
-                    this.decidedLiterals.add(key);
-                    this.model.add(key);
-                    return key;
-                }
+        Map<Literal, Integer> occurrences = this.formula.getLiteralOccurrences();
+        int sizeModel = this.model.size();
+        for(Literal key : occurrences.keySet()) {
+            Literal notKey = key.getNegate();
+            if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(notKey))) {
+                this.decidedLiterals.add(key);
+                this.model.add(key);
+                return key;
             }
-            if(sizeModel == this.model.size()) {
-                throw new Exception("there are no more literals to decide.");
-            }
-            return null;
         }
+        if(sizeModel == this.model.size()) {
+            throw new Exception("there are no more literals to decide.");
+        }
+        return null;
     }
 
-    private void unitPropagate(Literal l) {
+    private boolean unitPropagate(Literal l) {
+        boolean prop = false;
         for(Clause c : formula.getClauses()) {
             // we need to propagate l, thus only clauses with l negated must be considered
-            Literal lNeg = new Literal(l.getLit(), !(l.isPositive()));
-            if(!c.containsLiteral(lNeg)) continue;
+            Literal notL = l.getNegate();
+            if(!c.containsLiteral(notL)) continue;
             ArrayList<Literal> undefLitArray = c.getUndefinedLiterals(this.model);
             if(undefLitArray.size() == 1) {
                 Literal undefLit = undefLitArray.get(0);
-                Literal undefLitNeg = new Literal(undefLit.getLit(), !(undefLit.isPositive()));
-                if(!(this.model.contains(undefLitNeg))) {
+                Literal notUndefLit = undefLit.getNegate();
+                if(!(this.model.contains(notUndefLit))) {
                     this.model.add(undefLit);
                     this.justification.put(undefLit, c);
+                    prop = true;
                 }
             }
         }
+        return prop;
     }
 
     private ArrayList<Literal> getUnaryClauses() throws Exception {
@@ -67,8 +60,8 @@ public class CDCL {
             if (c.getLiterals().size() == 1) {
                 Literal l = c.getLiterals().get(0);
                 unitLiterals.add(l);
-                Literal negL = new Literal(l.getLit(), !(l.isPositive()));
-                if(unitLiterals.contains(negL)) {
+                Literal notL = l.getNegate();
+                if(unitLiterals.contains(notL)) {
                     throw new Exception("Conflict: there are two unary clauses that are opposite!");
                 }
             }
@@ -89,8 +82,8 @@ public class CDCL {
                     sat = true;
                     break;
                 } else {
-                    Literal negL = new Literal(l.getLit(), !(l.isPositive()));
-                    if(this.model.contains(negL)) {
+                    Literal notL = l.getNegate();
+                    if(this.model.contains(notL)) {
                         negateCounter++;
                     }
                 }
@@ -105,9 +98,48 @@ public class CDCL {
         return null;
     }
 
+    private Clause explain(Clause conflict) {
+        for(Literal l : conflict.getLiterals()) {
+            Literal notL = l.getNegate();
+            if(this.justification.containsKey(notL)) {
+                return conflict.getResolvent(this.justification.get(notL));
+            }
+        }
+        return null;
+    }
+
+    private void learn(Clause resolvent) {
+        this.formula.addClause(resolvent);
+    }
+
+    private void backjump(Clause resolvent) {
+        Literal lastDecidedLiteral = this.decidedLiterals.get(this.decidedLiterals.size()-1);
+        this.decidedLiterals.remove(lastDecidedLiteral);
+        int index = this.model.indexOf(lastDecidedLiteral);
+        // remove all propagated literals
+        for(Literal l : this.model.subList(index, this.model.size())) {
+            this.justification.remove(l);
+        }
+        this.model.subList(index, this.model.size()).clear();
+        // add the notDecided to the model and to the justification map
+        Literal notDecided = lastDecidedLiteral.getNegate();
+        this.model.add(notDecided);
+        this.justification.put(notDecided, resolvent);
+
+    }
+
     public void findModel() {
         try {
-            this.unitClauses = this.getUnaryClauses();
+            ArrayList<Literal> unitClauses = this.getUnaryClauses();
+            // propagate unit Clauses
+            for(Literal l : unitClauses) {
+                this.model.add(l);
+                Clause c = new Clause();
+                c.addLiteral(l);
+                this.justification.put(l, c);
+            }
+            System.out.println(this.model);
+            System.out.println(this.justification);
             boolean sat = false;
 
             /* TEST CASE */
@@ -119,11 +151,13 @@ public class CDCL {
                 Clause conflict = this.checkConflict();
                 if(conflict != null) {
                     System.out.println("Conflict detected: " + conflict);
+                    System.out.println(this.decidedLiterals);
                     if(this.decidedLiterals.isEmpty()) {
                         throw new Exception("Conflict at level 0, so NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
                     } else {
-                        // TODO explain step
-                        // TODO learn step
+                        Clause resolvent = this.explain(conflict);
+                        this.learn(resolvent);
+                        this.backjump(resolvent);
                     }
                 } else {
                     sat = this.formula.isSatisfied(this.model);

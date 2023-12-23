@@ -20,6 +20,10 @@ public class Literal {
         return this.lit;
     }
 
+    public Literal getNegate() {
+        return new Literal(this.lit, !this.positive);
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();

@@ -59,4 +59,13 @@ public class Clause {
         return str.toString();
     }
 
+    public Clause getResolvent(Clause c) {
+        Clause resolvent = new Clause();
+        for(Literal l : this.getLiterals()) {
+            if(c.containsLiteral(l)) {
+                resolvent.addLiteral(l);
+            }
+        }
+        return resolvent;
+    }
 }
