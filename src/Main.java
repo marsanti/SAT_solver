@@ -18,7 +18,7 @@ public class Main {
 //        formula.addClause(clause2);
 //
 //        System.out.println("F = " + formula);
-        Formula f = Utils.readFormulaFromFile("tests/test2.cnf");
+        Formula f = Utils.readFormulaFromFile("tests/test3.cnf");
         CDCL solver = new CDCL(f);
         solver.findModel();
     }
