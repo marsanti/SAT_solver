@@ -22,7 +22,7 @@ public class CDCL {
         int sizeModel = this.model.size();
         for(Literal key : occurrences.keySet()) {
             Literal notKey = key.getNegate();
-            if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(notKey))) {
+            if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(notKey)) && !(this.model.contains(key))) {
                 this.decidedLiterals.add(key);
                 this.model.add(key);
                 return key;
@@ -153,6 +153,13 @@ public class CDCL {
                         throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
                     } else {
                         Clause resolvent = this.explain(conflict);
+                        if(resolvent == null) {
+                            throw new Exception("UNSAT for Fail rule: model = " + this.model);
+                        }
+                        Clause resNeg = resolvent.getNegate();
+                        if(formula.containsClause(resNeg)) {
+                            throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
+                        }
                         this.learn(resolvent);
                         this.backjump(resolvent);
                     }

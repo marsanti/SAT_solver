@@ -35,16 +35,9 @@ public class Formula {
         return clauses;
     }
 
-    public ArrayList<Literal> getAllLiterals() {
-        ArrayList<Literal> lits = new ArrayList<>();
-
-        for(Clause c : clauses) {
-            lits.addAll(c.getLiterals());
-        }
-
-        return lits;
+    public Boolean containsClause(Clause c) {
+        return this.clauses.contains(c);
     }
-
     public Map<Literal, Integer> getLiteralOccurrences() {
         Map<Literal, Integer> occurrences = new HashMap<>();
         for(Clause c : this.clauses) {

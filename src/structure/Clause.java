@@ -1,6 +1,7 @@
 package structure;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Clause {
 
@@ -68,4 +69,28 @@ public class Clause {
         }
         return resolvent;
     }
+
+    public Clause getNegate() {
+        Clause newClause = new Clause();
+        for(Literal l : this.literals) {
+            Literal lNeg = l.getNegate();
+            newClause.addLiteral(lNeg);
+        }
+        return newClause;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Clause clause = (Clause) o;
+        if(this.literals.size() != clause.literals.size()) return false;
+        for(Literal l : this.literals) {
+            if(!(clause.literals.contains(l))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
