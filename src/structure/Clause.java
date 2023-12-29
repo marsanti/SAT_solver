@@ -5,9 +5,13 @@ import java.util.Objects;
 
 public class Clause {
 
-    private ArrayList<Literal> literals;
+    private final ArrayList<Literal> literals;
+    // size of max 2
+    private final ArrayList<Literal> twoWatchedLiterals;
+
     public Clause() {
         this.literals = new ArrayList<>();
+        this.twoWatchedLiterals = new ArrayList<>();
     }
 
     public ArrayList<Literal> getLiterals() {
@@ -77,6 +81,92 @@ public class Clause {
             newClause.addLiteral(lNeg);
         }
         return newClause;
+    }
+
+    private Literal getNonFalseLiteral(ArrayList<Literal> model) {
+        for(Literal lit : this.literals) {
+            Literal notLit = lit.getNegate();
+            if(model.contains(lit) && !this.twoWatchedLiterals.contains(lit)) {
+                return lit;
+            } else if(!model.contains(notLit) && !this.twoWatchedLiterals.contains(lit)) {
+                return lit;
+            }
+        }
+        return null;
+    }
+
+    private Object initTwoWatchedLiterals(ArrayList<Literal> model) {
+        // init two watched array
+        if(this.twoWatchedLiterals.size() == 0) {
+            Literal lit = this.getNonFalseLiteral(model);
+            if(lit == null) {
+                return false;
+            } else {
+                this.twoWatchedLiterals.add(lit);
+            }
+            Literal lit2 = this.getNonFalseLiteral(model);
+            if(lit2 == null) {
+                if(!model.contains(lit)) {
+                    // since no other non-false Lit was found, then we can say that lit is the prop unit
+                    model.add(lit);
+                    return true;
+                }
+            }
+        }
+        return null;
+    }
+    public boolean watchTwoLiterals(ArrayList<Literal> model) {
+        Object response = initTwoWatchedLiterals(model);
+
+        // if response is boolean then return it, otherwise go ahead
+        if(response != null) {
+            return (boolean) response;
+        }
+
+        Literal lit1 = this.twoWatchedLiterals.get(0);
+        Literal lit2 = this.twoWatchedLiterals.get(1);
+        if(model.contains(lit1.getNegate())) {
+            if(model.contains(lit2.getNegate())) {
+                // both lit1 and lit2 are now false, so we remove them from the watched literals and redo the init function
+                this.twoWatchedLiterals.remove(lit1);
+                this.twoWatchedLiterals.remove(lit2);
+                Object response1 = initTwoWatchedLiterals(model);
+
+                // if response1 is boolean then return it, otherwise go ahead
+                if(response1 != null) {
+                    return (boolean) response1;
+                }
+            } else {
+                // only lit1 is inside the model
+                this.twoWatchedLiterals.remove(lit1);
+                lit1 = getNonFalseLiteral(model);
+                if(lit1 == null) {
+                    if(!model.contains(lit2)) {
+                        // since no other non-false Lit was found, then we can say that lit2 is the prop unit
+                        model.add(lit2);
+                        return true;
+                    }
+                } else {
+                    this.twoWatchedLiterals.add(lit1);
+                }
+            }
+        } else if (model.contains(lit2.getNegate())) {
+            // only lit2 is inside the model
+            this.twoWatchedLiterals.remove(lit2);
+            lit2 = getNonFalseLiteral(model);
+            if(lit2 == null) {
+                if(!model.contains(lit1)) {
+                    // since no other non-false Lit was found, then we can say that lit1 is the prop unit
+                    model.add(lit1);
+                    return true;
+                }
+            } else {
+                this.twoWatchedLiterals.add(lit2);
+            }
+        }
+
+        // all the literals are false
+        return false;
     }
 
     @Override
