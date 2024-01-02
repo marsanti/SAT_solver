@@ -1,7 +1,6 @@
 package structure;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class Clause {
 
@@ -108,19 +107,30 @@ public class Clause {
             if(lit2 == null) {
                 if(!model.contains(lit)) {
                     // since no other non-false Lit was found, then we can say that lit is the prop unit
-                    model.add(lit);
-                    return true;
+                    return lit;
                 }
+            } else {
+                this.twoWatchedLiterals.add(lit2);
             }
         }
         return null;
     }
-    public boolean watchTwoLiterals(ArrayList<Literal> model) {
+    public Object watchTwoLiterals(ArrayList<Literal> model) {
         Object response = initTwoWatchedLiterals(model);
 
         // if response is boolean then return it, otherwise go ahead
         if(response != null) {
-            return (boolean) response;
+            if(response instanceof Literal) {
+                return response;
+            } else if((boolean) response) {
+                return true;
+            } else {
+                return this;
+            }
+        }
+
+        if(this.twoWatchedLiterals.size() == 1) {
+            return true;
         }
 
         Literal lit1 = this.twoWatchedLiterals.get(0);
@@ -134,7 +144,13 @@ public class Clause {
 
                 // if response1 is boolean then return it, otherwise go ahead
                 if(response1 != null) {
-                    return (boolean) response1;
+                    if(response1 instanceof Literal) {
+                        return response1;
+                    } else if((boolean) response1) {
+                        return true;
+                    } else {
+                        return this;
+                    }
                 }
             } else {
                 // only lit1 is inside the model
@@ -143,8 +159,7 @@ public class Clause {
                 if(lit1 == null) {
                     if(!model.contains(lit2)) {
                         // since no other non-false Lit was found, then we can say that lit2 is the prop unit
-                        model.add(lit2);
-                        return true;
+                        return lit2;
                     }
                 } else {
                     this.twoWatchedLiterals.add(lit1);
@@ -157,8 +172,7 @@ public class Clause {
             if(lit2 == null) {
                 if(!model.contains(lit1)) {
                     // since no other non-false Lit was found, then we can say that lit1 is the prop unit
-                    model.add(lit1);
-                    return true;
+                    return lit1;
                 }
             } else {
                 this.twoWatchedLiterals.add(lit2);
@@ -166,7 +180,7 @@ public class Clause {
         }
 
         // all the literals are false
-        return false;
+        return true;
     }
 
     @Override

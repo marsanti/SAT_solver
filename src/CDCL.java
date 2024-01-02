@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CDCL {
-    private Formula formula;
-    private ArrayList<Literal> model;
-    private ArrayList<Literal> decidedLiterals;
-    private Map<Literal, Clause> justification;
+    private final Formula formula;
+    private final ArrayList<Literal> model;
+    private final ArrayList<Literal> decidedLiterals;
+    private final Map<Literal, Clause> justification;
 
     public CDCL(Formula f) {
         this.formula = f;
@@ -54,6 +54,23 @@ public class CDCL {
             }
         }
         return changed;
+    }
+
+    private Object twoWatchedLit() {
+        int modelSize = this.model.size();
+
+        for(Clause c : this.formula.getClauses()) {
+            Object response = c.watchTwoLiterals(this.model);
+            if(response instanceof Clause) {
+                System.out.println(response + " is a conflict clause");
+                return response;
+            } else if(response instanceof Literal) {
+                this.model.add((Literal) response);
+                this.justification.put((Literal) response, c);
+            }
+        }
+
+        return modelSize != this.model.size();
     }
 
     private ArrayList<Literal> getUnaryClauses() throws Exception {
@@ -144,11 +161,12 @@ public class CDCL {
 
             /* TEST CASE */
             while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
-                if(!this.unitPropagate()) {
-                    this.decide();
-                }
-                Clause conflict = this.checkConflict();
-                if(conflict != null) {
+//                if(!this.unitPropagate()) {
+//                    this.decide();
+//                }
+                Object response = this.twoWatchedLit();
+                if(response instanceof Clause) {
+                    Clause conflict = (Clause) response;
                     if(this.decidedLiterals.isEmpty()) {
                         throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
                     } else {
@@ -164,9 +182,32 @@ public class CDCL {
                         this.backjump(resolvent);
                     }
                 } else {
-                    sat = this.formula.isSatisfied(this.model);
+                    boolean res = (boolean) response;
+                    if(!res) {
+                        this.decide();
+                    }
 
+                    sat = this.formula.isSatisfied(this.model);
                 }
+//                Clause conflict = this.checkConflict();
+//                if(conflict != null) {
+//                    if(this.decidedLiterals.isEmpty()) {
+//                        throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
+//                    } else {
+//                        Clause resolvent = this.explain(conflict);
+//                        if(resolvent == null) {
+//                            throw new Exception("UNSAT for Fail rule: model = " + this.model);
+//                        }
+//                        Clause resNeg = resolvent.getNegate();
+//                        if(formula.containsClause(resNeg)) {
+//                            throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
+//                        }
+//                        this.learn(resolvent);
+//                        this.backjump(resolvent);
+//                    }
+//                } else {
+//                    sat = this.formula.isSatisfied(this.model);
+//                }
             }
             System.out.println("The formula " + this.formula + " is SAT: \nmodel: " + this.model);
             /* END TEST CASE */
