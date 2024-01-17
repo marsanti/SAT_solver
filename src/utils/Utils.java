@@ -53,6 +53,8 @@ public class Utils {
             System.out.println("Generic Error while reading the file with path: " + path + " with error: " + e.getMessage());
         }
 
+        formula.initVSIDS();
+
         return formula;
     }
 }

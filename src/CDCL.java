@@ -1,4 +1,5 @@
 import structure.*;
+import utils.Strategy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,29 +10,32 @@ public class CDCL {
     private final ArrayList<Literal> model;
     private final ArrayList<Literal> decidedLiterals;
     private final Map<Literal, Clause> justification;
+    private int k;
+    private static final int VSIDS_LIMIT_FOR_DECAY = 2;
+    private static final double DECAY_CONSTANT = 0.95;
 
     public CDCL(Formula f) {
         this.formula = f;
         this.model = new ArrayList<>();
         this.decidedLiterals = new ArrayList<>();
         this.justification = new HashMap<>();
+        k = 0;
     }
 
-    private Literal decide() throws Exception {
-        Map<Literal, Integer> occurrences = this.formula.getLiteralOccurrences();
+    private void decide() throws Exception {
+        Map<Literal, Double> VSIDS = this.formula.getVSIDS();
         int sizeModel = this.model.size();
-        for(Literal key : occurrences.keySet()) {
+        for(Literal key : VSIDS.keySet()) {
             Literal notKey = key.getNegate();
             if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(notKey)) && !(this.model.contains(key))) {
                 this.decidedLiterals.add(key);
                 this.model.add(key);
-                return key;
+                return;
             }
         }
         if(sizeModel == this.model.size()) {
             throw new Exception("there are no more literals to decide.");
         }
-        return null;
     }
 
     private boolean unitPropagate() {
@@ -147,70 +151,86 @@ public class CDCL {
 
     }
 
-    public void findModel() {
-        try {
-            ArrayList<Literal> unitClauses = this.getUnaryClauses();
-            // propagate unit Clauses
-            for(Literal l : unitClauses) {
-                this.model.add(l);
-                Clause c = new Clause();
-                c.addLiteral(l);
-                this.justification.put(l, c);
+    private void FUIP() throws Exception {
+        ArrayList<Literal> unitClauses = this.getUnaryClauses();
+        // propagate unit Clauses
+        for (Literal l : unitClauses) {
+            this.model.add(l);
+            Clause c = new Clause();
+            c.addLiteral(l);
+            this.justification.put(l, c);
+        }
+
+        boolean sat = false;
+        while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
+            if(!this.unitPropagate()) {
+                this.decide();
             }
-            boolean sat = false;
+            Clause conflict = this.checkConflict();
+            if(conflict != null) {
+                this.solveConflict(conflict);
+            } else {
+                sat = this.formula.isSatisfied(this.model);
+            }
 
-            /* TEST CASE */
-            while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
-//                if(!this.unitPropagate()) {
-//                    this.decide();
-//                }
-                Object response = this.twoWatchedLit();
-                if(response instanceof Clause) {
-                    Clause conflict = (Clause) response;
-                    if(this.decidedLiterals.isEmpty()) {
-                        throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
-                    } else {
-                        Clause resolvent = this.explain(conflict);
-                        if(resolvent == null) {
-                            throw new Exception("UNSAT for Fail rule: model = " + this.model);
-                        }
-                        Clause resNeg = resolvent.getNegate();
-                        if(formula.containsClause(resNeg)) {
-                            throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
-                        }
-                        this.learn(resolvent);
-                        this.backjump(resolvent);
-                    }
-                } else {
-                    boolean res = (boolean) response;
-                    if(!res) {
-                        this.decide();
-                    }
+        }
+    }
 
-                    sat = this.formula.isSatisfied(this.model);
+    private void TWL() throws Exception {
+        boolean sat = false;
+        while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
+            Object response = this.twoWatchedLit();
+            if(response instanceof Clause) {
+                Clause conflict = (Clause) response;
+                this.solveConflict(conflict);
+            } else {
+                boolean res = (boolean) response;
+                if(!res) {
+                    this.decide();
                 }
-//                Clause conflict = this.checkConflict();
-//                if(conflict != null) {
-//                    if(this.decidedLiterals.isEmpty()) {
-//                        throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
-//                    } else {
-//                        Clause resolvent = this.explain(conflict);
-//                        if(resolvent == null) {
-//                            throw new Exception("UNSAT for Fail rule: model = " + this.model);
-//                        }
-//                        Clause resNeg = resolvent.getNegate();
-//                        if(formula.containsClause(resNeg)) {
-//                            throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
-//                        }
-//                        this.learn(resolvent);
-//                        this.backjump(resolvent);
-//                    }
-//                } else {
-//                    sat = this.formula.isSatisfied(this.model);
-//                }
+
+                sat = this.formula.isSatisfied(this.model);
+            }
+        }
+    }
+
+    private void solveConflict(Clause conflict) throws Exception {
+        this.formula.increaseVSIDSCounters(conflict);
+        if(k >= VSIDS_LIMIT_FOR_DECAY) {
+            this.formula.decayVSIDS(DECAY_CONSTANT);
+            k = 0;
+        } else {
+            k++;
+        }
+        if(this.decidedLiterals.isEmpty()) {
+            throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
+        } else {
+            Clause resolvent = this.explain(conflict);
+            if(resolvent == null) {
+                throw new Exception("UNSAT for Fail rule: model = " + this.model);
+            }
+            Clause resNeg = resolvent.getNegate();
+            if(formula.containsClause(resNeg)) {
+                throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
+            }
+            this.learn(resolvent);
+            this.backjump(resolvent);
+        }
+    }
+
+    public void findModel(Strategy strategy) {
+        try {
+            switch (strategy) {
+                case FUIP:
+                    this.FUIP();
+                    break;
+                case TWL:
+                    this.TWL();
+                    break;
+                default:
+                    throw new Error(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
             }
             System.out.println("The formula " + this.formula + " is SAT: \nmodel: " + this.model);
-            /* END TEST CASE */
 
         } catch(Exception e) {
             System.out.println(e.getMessage());

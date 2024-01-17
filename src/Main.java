@@ -1,6 +1,7 @@
 import structure.Clause;
 import structure.Formula;
 import structure.Literal;
+import utils.Strategy;
 import utils.Utils;
 
 public class Main {
@@ -18,8 +19,8 @@ public class Main {
 //        formula.addClause(clause2);
 //
 //        System.out.println("F = " + formula);
-        Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat2.cnf");
+        Formula f = Utils.readFormulaFromFile("tests/lectureTests/sat4.cnf");
         CDCL solver = new CDCL(f);
-        solver.findModel();
+        solver.findModel(Strategy.TWL);
     }
 }
