@@ -66,7 +66,7 @@ public class CDCL {
         for(Clause c : this.formula.getClauses()) {
             Object response = c.watchTwoLiterals(this.model);
             if(response instanceof Clause) {
-                System.out.println(response + " is a conflict clause");
+                //System.out.println(response + " is a conflict clause");
                 return response;
             } else if(response instanceof Literal) {
                 this.model.add((Literal) response);

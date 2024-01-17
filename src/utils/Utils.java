@@ -18,8 +18,10 @@ public class Utils {
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
                 data = data.trim(); // ignore useless space at the start and at the end of the line
-                String[] data_split = data.split(" ");
-
+                String[] data_split = data.split("\\s+");
+                if(data.contains("%") && !data_split[0].equals("c")) {
+                    break;
+                }
                 if(data_split[0].equals("c")) {
                     StringBuilder commentBuilder = new StringBuilder();
                     for(String piece : data_split) {

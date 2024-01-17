@@ -19,7 +19,9 @@ public class Main {
 //        formula.addClause(clause2);
 //
 //        System.out.println("F = " + formula);
-        Formula f = Utils.readFormulaFromFile("tests/lectureTests/sat4.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat3.cnf");
+        Formula f = Utils.readFormulaFromFile("tests/hard/uf20-01.cnf");
+        System.out.println(f);
         CDCL solver = new CDCL(f);
         solver.findModel(Strategy.TWL);
     }
