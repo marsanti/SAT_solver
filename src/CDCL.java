@@ -1,5 +1,5 @@
 import structure.*;
-import utils.Strategy;
+import utils.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +10,7 @@ public class CDCL {
     private final ArrayList<Literal> model;
     private final ArrayList<Literal> decidedLiterals;
     private final Map<Literal, Clause> justification;
+    private final Map<ArrayList<Clause>, Clause> proofMapper;
     private int k;
     private static final int VSIDS_LIMIT_FOR_DECAY = 2;
     private static final double DECAY_CONSTANT = 0.95;
@@ -19,6 +20,7 @@ public class CDCL {
         this.model = new ArrayList<>();
         this.decidedLiterals = new ArrayList<>();
         this.justification = new HashMap<>();
+        this.proofMapper = new HashMap<>();
         k = 0;
     }
 
@@ -125,7 +127,13 @@ public class CDCL {
         for(Literal l : conflict.getLiterals()) {
             Literal notL = l.getNegate();
             if(this.justification.containsKey(notL)) {
-                return conflict.getResolvent(this.justification.get(notL));
+                Clause justClause = this.justification.get(notL);
+                Clause resolvent = conflict.getResolvent(justClause);
+                ArrayList<Clause> parents = new ArrayList<>();
+                parents.add(conflict);
+                parents.add(justClause);
+                this.proofMapper.put(parents, resolvent);
+                return resolvent;
             }
         }
         return null;
@@ -234,6 +242,7 @@ public class CDCL {
 
         } catch(Exception e) {
             System.out.println(e.getMessage());
+            System.out.println(this.proofMapper);
         }
     }
 }

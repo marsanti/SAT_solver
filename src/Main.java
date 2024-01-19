@@ -1,28 +1,13 @@
-import structure.Clause;
 import structure.Formula;
-import structure.Literal;
-import utils.Strategy;
-import utils.Utils;
+import utils.*;
 
 public class Main {
     public static void main(String[] args) {
-//        Formula formula = new Formula();
-//        Clause clause1 = new Clause();
-//        clause1.addLiteral(new Literal(1, true));
-//        clause1.addLiteral(new Literal(3, false));
-//        Clause clause2 = new Clause();
-//        clause2.addLiteral(new Literal(2, true));
-//        clause2.addLiteral(new Literal(3, true));
-//        clause2.addLiteral(new Literal(1, false));
-//
-//        formula.addClause(clause1);
-//        formula.addClause(clause2);
-//
-//        System.out.println("F = " + formula);
-//        Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat3.cnf");
-        Formula f = Utils.readFormulaFromFile("tests/hard/uf20-01.cnf");
+        // Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat2.cnf");
+        Formula f = Utils.readFormulaFromFile("tests/test1.cnf");
+        // Formula f = Utils.readFormulaFromFile("tests/hard/uf20-09.cnf");
         System.out.println(f);
         CDCL solver = new CDCL(f);
-        solver.findModel(Strategy.TWL);
+        solver.findModel(Strategy.FUIP);
     }
 }

@@ -65,10 +65,11 @@ public class Clause {
 
     public Clause getResolvent(Clause c) {
         Clause resolvent = new Clause();
-        for(Literal l : this.getLiterals()) {
-            if(c.containsLiteral(l)) {
+        ArrayList<Literal> allLit = new ArrayList<>(this.getLiterals());
+        allLit.addAll(c.getLiterals());
+        for(Literal l : allLit) {
+            if(!allLit.contains(l.getNegate()) && !resolvent.containsLiteral(l))
                 resolvent.addLiteral(l);
-            }
         }
         return resolvent;
     }
@@ -96,7 +97,7 @@ public class Clause {
 
     private Object initTwoWatchedLiterals(ArrayList<Literal> model) {
         // init two watched array
-        if(this.twoWatchedLiterals.size() == 0) {
+        if(this.twoWatchedLiterals.isEmpty()) {
             Literal lit = this.getNonFalseLiteral(model);
             if(lit == null) {
                 return false;
