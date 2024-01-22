@@ -117,6 +117,7 @@ public class Clause {
         return null;
     }
     public Object watchTwoLiterals(ArrayList<Literal> model) {
+        this.checkForFalsifiedElements(model);
         Object response = initTwoWatchedLiterals(model);
 
         // if response is boolean then return it, otherwise go ahead
@@ -182,6 +183,16 @@ public class Clause {
 
         // all the literals are false
         return true;
+    }
+
+    private void checkForFalsifiedElements(ArrayList<Literal> model) {
+        ArrayList<Literal> copy = new ArrayList<>(this.twoWatchedLiterals);
+        for(Literal l : copy) {
+            // if model contains notL then the literal has been falsified
+            if(model.contains(l.getNegate())) {
+                this.twoWatchedLiterals.remove(l);
+            }
+        }
     }
 
     @Override

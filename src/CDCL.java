@@ -186,7 +186,7 @@ public class CDCL {
 
     private void TWL() throws Exception {
         boolean sat = false;
-        while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
+        while((this.model.size() != this.formula.getNumberOfLiterals()) || !sat) {
             Object response = this.twoWatchedLit();
             if(response instanceof Clause) {
                 Clause conflict = (Clause) response;
@@ -211,15 +211,15 @@ public class CDCL {
             k++;
         }
         if(this.decidedLiterals.isEmpty()) {
-            throw new Exception("Conflict at level 0, formula NOT SAT with model = " + this.model + " with conflict clause: " + conflict);
+            throw new Exception("Result: UNSATISFIABLE, conflict at level 0\nmodel: " + this.model +"\nConflict clause: " + conflict);
         } else {
             Clause resolvent = this.explain(conflict);
             if(resolvent == null) {
-                throw new Exception("UNSAT for Fail rule: model = " + this.model);
+                throw new Exception("Result: UNSATISFIABLE, Fail rule\nmodel: " + this.model +"\nConflict clause: " + conflict);
             }
             Clause resNeg = resolvent.getNegate();
             if(formula.containsClause(resNeg)) {
-                throw new Exception("UNSAT for Fail rule: model = " + this.model + " with resolvent: " + resolvent);
+                throw new Exception("Result: UNSATISFIABLE, Fail rule (resolvent in formula)\nmodel: " + this.model +"\nResolvent: " + resolvent);
             }
             this.learn(resolvent);
             this.backjump(resolvent);
@@ -236,13 +236,18 @@ public class CDCL {
                     this.TWL();
                     break;
                 default:
-                    throw new Error(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
+                    throw new Exception(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
             }
-            System.out.println("The formula " + this.formula + " is SAT: \nmodel: " + this.model);
+            System.out.println("Result: SATISFIABLE\nmodel: " + this.model);
 
         } catch(Exception e) {
             System.out.println(e.getMessage());
-            System.out.println(this.proofMapper);
+//            System.out.println("Some info");
+//            System.out.println(this.formula);
+//            System.out.println("-----");
+//            System.out.println(this.proofMapper);
+//            System.out.println("-----");
+//            System.out.println(this.justification);
         }
     }
 }
