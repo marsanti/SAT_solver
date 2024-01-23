@@ -27,9 +27,10 @@ public class Clause {
 
     public ArrayList<Literal> getUndefinedLiterals(ArrayList<Literal> model) {
         ArrayList<Literal> undefinedLiterals = new ArrayList<>();
+        if(this.isSatisfied(model)) return undefinedLiterals;
         for(Literal l : this.literals) {
-            Literal lNeg = new Literal(l.getLit(), !(l.isPositive()));
-            if(!(model.contains(l) || model.contains(lNeg))) {
+            Literal lNeg = l.getNegate();
+            if(!(model.contains(l)) && !(model.contains(lNeg))) {
                 undefinedLiterals.add(l);
             }
         }
@@ -132,6 +133,9 @@ public class Clause {
         }
 
         if(this.twoWatchedLiterals.size() == 1) {
+            if(!model.contains(this.twoWatchedLiterals.get(0))) {
+                return this.twoWatchedLiterals.get(0);
+            }
             return true;
         }
 

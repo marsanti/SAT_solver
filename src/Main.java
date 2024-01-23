@@ -3,9 +3,10 @@ import utils.*;
 
 public class Main {
     public static void main(String[] args) {
-//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat2.cnf");
-//        Formula f = Utils.readFormulaFromFile("tests/pigeon-5.cnf");
-         Formula f = Utils.readFormulaFromFile("tests/hard/uf20-09.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/sat4.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/pigeon-7.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/test1.cnf");
+         Formula f = Utils.readFormulaFromFile("tests/hard/uf20-012.cnf");
         try {
 //            if (args.length != 2) {
 //                throw new Exception("Wrong usage: script <Strategy> <path_to_cnf>");
@@ -24,7 +25,21 @@ public class Main {
             System.out.println("----------");
             long startTime = System.currentTimeMillis();
             CDCL solver = new CDCL(f);
-            solver.findModel(strategy);
+            boolean isSat;
+            String errMessage = "";
+            try {
+                isSat = solver.findModel(strategy);
+            } catch (Exception e){
+                errMessage = e.getMessage();
+                isSat = false;
+            }
+
+            if(isSat) {
+                System.out.println("Result: SATISFIABLE\nmodel: " + solver.getModel());
+            } else {
+                System.out.println(errMessage);
+            }
+
             long endTime = System.currentTimeMillis();
             System.out.println("Ended in " + (endTime - startTime) + "ms");
         } catch(Exception e) {

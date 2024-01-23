@@ -23,13 +23,16 @@ public class CDCL {
         this.proofMapper = new HashMap<>();
         k = 0;
     }
-
+    public ArrayList<Literal> getModel() {
+        return model;
+    }
     private void decide() throws Exception {
         Map<Literal, Double> VSIDS = this.formula.getVSIDS();
         int sizeModel = this.model.size();
         for(Literal key : VSIDS.keySet()) {
+            if(this.decidedLiterals.contains(key) || this.model.contains(key)) continue;
             Literal notKey = key.getNegate();
-            if(!(this.decidedLiterals.contains(key)) && !(this.model.contains(notKey)) && !(this.model.contains(key))) {
+            if(!(this.model.contains(notKey))) {
                 this.decidedLiterals.add(key);
                 this.model.add(key);
                 return;
@@ -41,41 +44,43 @@ public class CDCL {
     }
 
     private boolean unitPropagate() {
-        boolean changed = false;
-        ArrayList<Literal> model_copy = new ArrayList<>(this.model);
-        for(Literal l : model_copy) {
-            for(Clause c : this.formula.getClauses()) {
-                Literal notL = l.getNegate();
-                if(!c.containsLiteral(notL)) continue;
+        boolean changed = true;
+        int initialModelSize = this.model.size();
+        // while model changes
+        while(changed) {
+            changed = false;
+            // for each clause of the formula
+            for (Clause c : this.formula.getClauses()) {
+                // get undefined literals (L and notL are not in the model)
                 ArrayList<Literal> undefLitArray = c.getUndefinedLiterals(this.model);
-                if(undefLitArray.size() == 1) {
+                // if there is only one undefined Literal then add it to the model and to justification map
+                if (undefLitArray.size() == 1) {
                     Literal undefLit = undefLitArray.get(0);
-                    Literal notUndefLit = undefLit.getNegate();
-                    if(!(this.model.contains(notUndefLit))) {
-                        this.model.add(undefLit);
-                        this.justification.put(undefLit, c);
-                        changed = true;
-                    }
+                    this.model.add(undefLit);
+                    this.justification.put(undefLit, c);
+                    changed = true;
                 }
             }
         }
-        return changed;
+        return initialModelSize != this.model.size();
     }
 
     private Object twoWatchedLit() {
         int modelSize = this.model.size();
-
-        for(Clause c : this.formula.getClauses()) {
-            Object response = c.watchTwoLiterals(this.model);
-            if(response instanceof Clause) {
-                //System.out.println(response + " is a conflict clause");
-                return response;
-            } else if(response instanceof Literal) {
-                this.model.add((Literal) response);
-                this.justification.put((Literal) response, c);
+        boolean changed = true;
+        while(changed) {
+            changed = false;
+            for (Clause c : this.formula.getClauses()) {
+                Object response = c.watchTwoLiterals(this.model);
+                if (response instanceof Clause) {
+                    return response;
+                } else if (response instanceof Literal) {
+                    changed = true;
+                    this.model.add((Literal) response);
+                    this.justification.put((Literal) response, c);
+                }
             }
         }
-
         return modelSize != this.model.size();
     }
 
@@ -160,15 +165,6 @@ public class CDCL {
     }
 
     private void FUIP() throws Exception {
-        ArrayList<Literal> unitClauses = this.getUnaryClauses();
-        // propagate unit Clauses
-        for (Literal l : unitClauses) {
-            this.model.add(l);
-            Clause c = new Clause();
-            c.addLiteral(l);
-            this.justification.put(l, c);
-        }
-
         boolean sat = false;
         while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
             if(!this.unitPropagate()) {
@@ -177,10 +173,8 @@ public class CDCL {
             Clause conflict = this.checkConflict();
             if(conflict != null) {
                 this.solveConflict(conflict);
-            } else {
-                sat = this.formula.isSatisfied(this.model);
             }
-
+            sat = this.formula.isSatisfied(this.model);
         }
     }
 
@@ -196,9 +190,8 @@ public class CDCL {
                 if(!res) {
                     this.decide();
                 }
-
-                sat = this.formula.isSatisfied(this.model);
             }
+            sat = this.formula.isSatisfied(this.model);
         }
     }
 
@@ -226,7 +219,7 @@ public class CDCL {
         }
     }
 
-    public void findModel(Strategy strategy) {
+    public boolean findModel(Strategy strategy) throws Exception {
         try {
             switch (strategy) {
                 case FUIP:
@@ -238,16 +231,10 @@ public class CDCL {
                 default:
                     throw new Exception(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
             }
-            System.out.println("Result: SATISFIABLE\nmodel: " + this.model);
-
+            return true;
         } catch(Exception e) {
             System.out.println(e.getMessage());
-//            System.out.println("Some info");
-//            System.out.println(this.formula);
-//            System.out.println("-----");
-//            System.out.println(this.proofMapper);
-//            System.out.println("-----");
-//            System.out.println(this.justification);
+            throw e;
         }
     }
 }
