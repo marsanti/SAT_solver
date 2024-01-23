@@ -166,7 +166,7 @@ public class CDCL {
 
     private void FUIP() throws Exception {
         boolean sat = false;
-        while((this.model.size() != this.formula.getNumberOfLiterals()) && !sat) {
+        while((this.model.size() != this.formula.getNumberOfLiterals()) || !sat) {
             if(!this.unitPropagate()) {
                 this.decide();
             }
@@ -220,21 +220,16 @@ public class CDCL {
     }
 
     public boolean findModel(Strategy strategy) throws Exception {
-        try {
-            switch (strategy) {
-                case FUIP:
-                    this.FUIP();
-                    break;
-                case TWL:
-                    this.TWL();
-                    break;
-                default:
-                    throw new Exception(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
-            }
-            return true;
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-            throw e;
+        switch (strategy) {
+            case FUIP:
+                this.FUIP();
+                break;
+            case TWL:
+                this.TWL();
+                break;
+            default:
+                throw new Exception(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
         }
+        return true;
     }
 }

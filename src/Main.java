@@ -3,10 +3,10 @@ import utils.*;
 
 public class Main {
     public static void main(String[] args) {
-//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/sat4.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat3.cnf");
 //        Formula f = Utils.readFormulaFromFile("tests/pigeon-7.cnf");
-//        Formula f = Utils.readFormulaFromFile("tests/test1.cnf");
-         Formula f = Utils.readFormulaFromFile("tests/hard/uf20-012.cnf");
+        Formula f = Utils.readFormulaFromFile("tests/quinn.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/hard/uf20-09.cnf");
         try {
 //            if (args.length != 2) {
 //                throw new Exception("Wrong usage: script <Strategy> <path_to_cnf>");
