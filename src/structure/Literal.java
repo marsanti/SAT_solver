@@ -6,22 +6,24 @@ public class Literal {
 
     private final int lit;
     private final boolean positive;
+    private int level;
 
-    public Literal(int lit, boolean positive) {
+    public Literal(int lit, boolean positive, int level) {
         this.lit = lit;
         this.positive = positive;
+        this.level = level;
     }
 
     public boolean isPositive() {
         return this.positive;
     }
 
-    public int getLit() {
-        return this.lit;
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     public Literal getNegate() {
-        return new Literal(this.lit, !this.positive);
+        return new Literal(this.lit, !this.positive, this.level);
     }
 
     @Override

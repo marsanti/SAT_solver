@@ -41,7 +41,7 @@ public class Utils {
                     for(String litStr : data_split) {
                         int lit = Integer.parseInt(litStr);
                         if(lit != 0) {
-                            Literal l = new Literal(Math.abs(lit), lit >= 0);
+                            Literal l = new Literal(Math.abs(lit), lit >= 0, -1);
                             c.addLiteral(l);
                         }
                     }

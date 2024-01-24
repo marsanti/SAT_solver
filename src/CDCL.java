@@ -33,6 +33,7 @@ public class CDCL {
             if(this.decidedLiterals.contains(key) || this.model.contains(key)) continue;
             Literal notKey = key.getNegate();
             if(!(this.model.contains(notKey))) {
+                key.setLevel(this.decidedLiterals.size() + 1);
                 this.decidedLiterals.add(key);
                 this.model.add(key);
                 return;
@@ -56,6 +57,7 @@ public class CDCL {
                 // if there is only one undefined Literal then add it to the model and to justification map
                 if (undefLitArray.size() == 1) {
                     Literal undefLit = undefLitArray.get(0);
+                    undefLit.setLevel(this.decidedLiterals.size());
                     this.model.add(undefLit);
                     this.justification.put(undefLit, c);
                     changed = true;
@@ -75,9 +77,11 @@ public class CDCL {
                 if (response instanceof Clause) {
                     return response;
                 } else if (response instanceof Literal) {
+                    Literal lit = (Literal) response;
                     changed = true;
-                    this.model.add((Literal) response);
-                    this.justification.put((Literal) response, c);
+                    lit.setLevel(this.decidedLiterals.size());
+                    this.model.add(lit);
+                    this.justification.put(lit, c);
                 }
             }
         }
@@ -159,6 +163,7 @@ public class CDCL {
         this.model.subList(index, this.model.size()).clear();
         // add the notDecided to the model and to the justification map
         Literal notDecided = lastDecidedLiteral.getNegate();
+        notDecided.setLevel(this.decidedLiterals.size());
         this.model.add(notDecided);
         this.justification.put(notDecided, resolvent);
 
