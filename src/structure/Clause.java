@@ -117,6 +117,17 @@ public class Clause {
         }
         return null;
     }
+    public void fixTWLArray(ArrayList<Literal> model) {
+        if(this.twoWatchedLiterals.size() < 2) {
+            for(Literal l : this.literals) {
+                if(!model.contains(l.getNegate()) && !this.twoWatchedLiterals.contains(l)) {
+                    this.twoWatchedLiterals.add(l);
+                    if(this.twoWatchedLiterals.size() == 2) return;
+                }
+            }
+        }
+    }
+
     public Object watchTwoLiterals(ArrayList<Literal> model) {
         this.checkForFalsifiedElements(model);
         Object response = initTwoWatchedLiterals(model);

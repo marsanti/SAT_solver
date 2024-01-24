@@ -88,6 +88,12 @@ public class CDCL {
         return modelSize != this.model.size();
     }
 
+    private void adjustTWLArrays() {
+        for(Clause c : this.formula.getClauses()) {
+            c.fixTWLArray(this.model);
+        }
+    }
+
     private ArrayList<Literal> getUnaryClauses() throws Exception {
         ArrayList<Literal> unitLiterals = new ArrayList<>();
         for(Clause c : this.formula.getClauses()) {
@@ -133,16 +139,45 @@ public class CDCL {
     }
 
     private Clause explain(Clause conflict) {
+//        for(Literal l : conflict.getLiterals()) {
+//            Literal notL = l.getNegate();
+//            if(this.justification.containsKey(notL)) {
+//                Clause justClause = this.justification.get(notL);
+//                Clause resolvent = conflict.getResolvent(justClause);
+//                ArrayList<Clause> parents = new ArrayList<>();
+//                parents.add(conflict);
+//                parents.add(justClause);
+//                this.proofMapper.put(parents, resolvent);
+//                return resolvent;
+//            }
+//        }
+//        return null;
+        int currentLevel = this.decidedLiterals.size();
+        Literal lastDecidedLiteral = this.decidedLiterals.get(this.decidedLiterals.size()-1);
+
         for(Literal l : conflict.getLiterals()) {
-            Literal notL = l.getNegate();
-            if(this.justification.containsKey(notL)) {
-                Clause justClause = this.justification.get(notL);
+            // check if l is a key in the justification map
+            Literal litKey = null;
+            for(Literal key : this.justification.keySet()) {
+                if(key.equals(l.getNegate())) {
+                    litKey = key;
+                    break;
+                }
+            }
+            // if litKey is a key and it's at the current level then get resolvent
+            if(litKey != null && litKey.getLevel() == currentLevel) {
+                Clause justClause = this.justification.get(litKey);
                 Clause resolvent = conflict.getResolvent(justClause);
                 ArrayList<Clause> parents = new ArrayList<>();
                 parents.add(conflict);
                 parents.add(justClause);
                 this.proofMapper.put(parents, resolvent);
-                return resolvent;
+                // recursive until the resolve clause contains the last decided lit
+                if(!resolvent.containsLiteral(lastDecidedLiteral.getNegate())) {
+                    return this.explain(resolvent);
+                } else {
+                    return resolvent;
+                }
             }
         }
         return null;
@@ -190,6 +225,7 @@ public class CDCL {
             if(response instanceof Clause) {
                 Clause conflict = (Clause) response;
                 this.solveConflict(conflict);
+                this.adjustTWLArrays();
             } else {
                 boolean res = (boolean) response;
                 if(!res) {

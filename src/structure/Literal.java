@@ -13,15 +13,15 @@ public class Literal {
         this.positive = positive;
         this.level = level;
     }
-
     public boolean isPositive() {
         return this.positive;
     }
-
     public void setLevel(int level) {
         this.level = level;
     }
-
+    public int getLevel() {
+        return this.level;
+    }
     public Literal getNegate() {
         return new Literal(this.lit, !this.positive, this.level);
     }
