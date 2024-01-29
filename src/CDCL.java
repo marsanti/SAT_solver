@@ -138,7 +138,50 @@ public class CDCL {
         return null;
     }
 
+    private ArrayList<Literal> getCurrentLevelLiterals() {
+        int currentLevel = this.decidedLiterals.size();
+        ArrayList<Literal> newList = new ArrayList<>();
+        for(Literal l : this.model) {
+            if(l.getLevel() == currentLevel) {
+                newList.add(l);
+            }
+        }
+        return newList;
+    }
+
     private Clause explain(Clause conflict) {
+        int currentLevel = this.decidedLiterals.size();
+        Clause resolvent = conflict;
+
+        do {
+            conflict = resolvent;
+            for (Literal l : conflict.getLiterals()) {
+                // check if l is a key in the justification map
+                Literal litKey = null;
+                for (Literal lit : getCurrentLevelLiterals()) {
+                    if (lit == l.getNegate()) {
+                        litKey = lit;
+                        break;
+                    }
+                }
+                // if litKey is a key, and it's at the current level then get resolvent
+                if (litKey != null) {
+                    Clause justClause = this.justification.get(litKey);
+                    resolvent = conflict.getResolvent(justClause);
+                    ArrayList<Clause> parents = new ArrayList<>();
+                    parents.add(conflict);
+                    parents.add(justClause);
+                    this.proofMapper.put(parents, resolvent);
+                    break;
+                }
+            }
+        } while(resolvent.isAssertionClause(this.model, currentLevel));
+
+        return resolvent;
+    }
+
+
+    private Clause explainOld(Clause conflict) {
 //        for(Literal l : conflict.getLiterals()) {
 //            Literal notL = l.getNegate();
 //            if(this.justification.containsKey(notL)) {

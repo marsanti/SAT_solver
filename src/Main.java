@@ -3,10 +3,12 @@ import utils.*;
 
 public class Main {
     public static void main(String[] args) {
-//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat3.cnf");
-//        Formula f = Utils.readFormulaFromFile("tests/pigeon-5.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat1.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/pigeon-7.cnf");
         Formula f = Utils.readFormulaFromFile("tests/quinn.cnf");
-//         Formula f = Utils.readFormulaFromFile("tests/hard/uf20-03.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/hardSat/uf20-013.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/hardUnsat/uuf50-07.cnf");
+
         try {
 //            if (args.length != 2) {
 //                throw new Exception("Wrong usage: script <Strategy> <path_to_cnf>");
@@ -17,7 +19,9 @@ public class Main {
             } catch (IllegalArgumentException iae) {
                 throw new Exception(args[0] + " is not implemented yet!\nAvailable strategies: FUIP, TWL");
             }
-
+            String filePath = args[1];
+            String[] filePieces = filePath.split("\\\\");
+            String fileName = filePieces[filePieces.length - 1];
 //            Formula f = Utils.readFormulaFromFile(args[1]);
             System.out.print("\n");
             System.out.println("Strategy selected: " + strategy);

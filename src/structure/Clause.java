@@ -1,6 +1,7 @@
 package structure;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Clause {
 
@@ -44,6 +45,31 @@ public class Clause {
             }
         }
         return false;
+    }
+
+    /**
+     * This function return if the clause is an Assertion Clause.
+     * one literal of the clause is false at the current level, whereas the others are false on a smaller level of the trail
+     * @param model the actual model
+     * @return true if is an assertion clause, false otherwise
+     */
+    public boolean isAssertionClause(ArrayList<Literal> model, int currentLevel) {
+        boolean oneFound = false;
+        for(Literal l : this.getLiterals()) {
+            int index = model.indexOf(l.getNegate());
+            if(index == -1) {
+                return false;
+            }
+            Literal modelLit = model.get(index);
+            if(modelLit.getLevel() == currentLevel) {
+                if(oneFound) {
+                    return false;
+                } else {
+                    oneFound = true;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
