@@ -85,10 +85,19 @@ public class Utils {
                 .map(File::getPath).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static void saveOutputContent(String filepath, String output) throws IOException {
+    /**
+     * Function to save the content into a file.
+     * @param filepath path of the test file
+     * @param output content to write in the output file
+     * @throws Exception Two types: Exception - if creating the folder generates problem; IOException - if writing in the output file generates problem.
+     */
+    public static void saveOutputContent(String filepath, String output) throws Exception {
         File outputDirectory = new File("output_tests");
+
         if(!outputDirectory.exists()) {
-            assert outputDirectory.mkdir();
+            if(!outputDirectory.mkdir()) {
+                throw new Exception("Error creating the output_tests folder");
+            }
         }
 
         File testFile = new File(filepath);
@@ -99,7 +108,6 @@ public class Utils {
             writer.write(output);
         }
         catch (IOException ex) {
-            // Handle me
             System.out.println("something went wrong writing the output file: " + ex.getMessage());
         }
     }

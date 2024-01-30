@@ -2,6 +2,7 @@ import structure.*;
 import utils.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -171,29 +172,21 @@ public class CDCL {
         Clause resolvent = conflict;
         this.n_conflict++;
 
+        ArrayList<Literal> currentLiterals = getCurrentLevelLiterals();
+        Collections.reverse(currentLiterals);
+
         do {
             conflict = resolvent;
-            for (Literal l : conflict.getLiterals()) {
-                // check if l is a key in the justification map
-                Literal litKey = null;
-                for (Literal lit : getCurrentLevelLiterals()) {
-                    if (lit == l.getNegate()) {
-                        litKey = lit;
-                        break;
-                    }
-                }
-                // if litKey is a key, and it's at the current level then get resolvent
-                if (litKey != null) {
-                    Clause justClause = this.justification.get(litKey);
-                    resolvent = conflict.getResolvent(justClause);
-                    ArrayList<Clause> parents = new ArrayList<>();
-                    parents.add(conflict);
-                    parents.add(justClause);
-                    this.proofMapper.put(parents, resolvent);
-                    break;
-                }
-            }
-        } while(resolvent.isAssertionClause(this.model, currentLevel));
+            Literal lit = currentLiterals.get(0);
+            if(this.decidedLiterals.contains(lit)) return resolvent;
+            currentLiterals.remove(0);
+            Clause justClause = this.justification.get(lit);
+            resolvent = conflict.getResolvent(justClause);
+            ArrayList<Clause> parents = new ArrayList<>();
+            parents.add(conflict);
+            parents.add(justClause);
+            this.proofMapper.put(parents, resolvent);
+        } while(!resolvent.isAssertionClause(this.model, currentLevel));
 
         return resolvent;
     }

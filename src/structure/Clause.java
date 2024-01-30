@@ -58,7 +58,7 @@ public class Clause {
         for(Literal l : this.getLiterals()) {
             int index = model.indexOf(l.getNegate());
             if(index == -1) {
-                return false;
+                continue;
             }
             Literal modelLit = model.get(index);
             if(modelLit.getLevel() == currentLevel) {

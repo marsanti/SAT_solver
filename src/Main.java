@@ -6,6 +6,7 @@ import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) {
         ArrayList<String> files = new ArrayList<>();
+        boolean printProofMap = false;
 
         // check arguments
         if (args.length == 1) {
@@ -13,6 +14,8 @@ public class Main {
                 System.out.println("Two usage for this script: \n" +
                         "1. SAT_solver.jar <Strategy> <path_to_cnf>\n" +
                         "2. SAT_solver.jar <Strategy> -F <path_to_folder_with_cnf>\n" +
+                        "Other flags:\n" +
+                        "-V to print the proofMap\n\n" +
                         "Available strategies: FUIP, TWL");
                 return;
             }
@@ -38,6 +41,13 @@ public class Main {
             }
         } else {
             files.add(args[1]);
+        }
+        // check if verbose flag is on
+        for(String arg : args) {
+            if(arg.equals("-V")) {
+                printProofMap = true;
+                break;
+            }
         }
 
         System.out.println(files.size() + " files detected");
@@ -65,15 +75,20 @@ public class Main {
                     ArrayList<Literal> model = solver.getModel();
                     output.append("Result: SATISFIABLE\nmodel: ").append(model).append("\nmodel size: ").append(model.size()).append("\n\n");
                 } else {
-                    output.append(errMessage).append("\n\n");
+                    output.append(errMessage).append("\n");
                 }
 
-                output.append("decisions: ").append(solver.n_decide_step).append("\n");
-                output.append("conflicts: ").append(solver.n_conflict).append("\n\n");
+                output.append("n. decisions: ").append(solver.n_decide_step).append("\n");
+                output.append("n. conflicts: ").append(solver.n_conflict).append("\n\n");
 
                 long endTime = System.currentTimeMillis();
                 long interval = endTime - startTime;
-                output.append("Ended in ").append(interval).append("ms");
+                output.append("Ended in ").append(interval).append("ms").append("\n\n");
+
+                if(!isSat && printProofMap) {
+                    output.append("proof map: ").append(solver.proofMapper);
+                }
+
                 Utils.saveOutputContent(file, String.valueOf(output));
             } catch(Exception e){
                 System.out.println(e.getMessage());
