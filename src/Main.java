@@ -86,7 +86,8 @@ public class Main {
                     output.append("Result: SATISFIABLE\nmodel: ").append(model).append("\nmodel size: ").append(model.size()).append("\n\n");
                 } else {
                     unsatProblems++;
-                    output.append(errMessage).append("\n");
+                    output.append(errMessage);
+                    output.append("proof size: ").append(solver.proofMapper.keySet().size()).append("\n\n");
                 }
 
                 output.append("n. decisions: ").append(solver.n_decide_step).append("\n");
