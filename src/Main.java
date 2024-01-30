@@ -26,7 +26,7 @@ public class Main {
                         "Available strategies: FUIP, TWL");
                 return;
             }
-        } else if (args.length > 3 || args.length <= 0) {
+        } else if (args.length > 4 || args.length <= 0) {
             System.out.println("Wrong usage, try: SAT_solver.jar -help");
             return;
         }
