@@ -7,6 +7,13 @@ public class Main {
     public static void main(String[] args) {
         ArrayList<String> files = new ArrayList<>();
         boolean printProofMap = false;
+        // statistic variables
+        int satProblems = 0;
+        int unsatProblems = 0;
+        long maxTime = 0;
+        long minTime = -1;
+        long sumTime = 0;
+        int numberOfProblems;
 
         // check arguments
         if (args.length == 1) {
@@ -50,7 +57,9 @@ public class Main {
             }
         }
 
-        System.out.println(files.size() + " files detected");
+        numberOfProblems = files.size();
+        System.out.println(numberOfProblems + " files detected...\n");
+        long startTimeGlobal = System.currentTimeMillis();
         for (String file : files) {
             try {
                 System.out.println("solving " + (files.indexOf(file) + 1) + "/" + files.size() + " (" + file + ")");
@@ -72,9 +81,11 @@ public class Main {
                 }
 
                 if (isSat) {
+                    satProblems++;
                     ArrayList<Literal> model = solver.getModel();
                     output.append("Result: SATISFIABLE\nmodel: ").append(model).append("\nmodel size: ").append(model.size()).append("\n\n");
                 } else {
+                    unsatProblems++;
                     output.append(errMessage).append("\n");
                 }
 
@@ -83,6 +94,15 @@ public class Main {
 
                 long endTime = System.currentTimeMillis();
                 long interval = endTime - startTime;
+                
+                if(interval > maxTime) {
+                    maxTime = interval;
+                }
+                if(minTime == -1 || minTime > interval) {
+                    minTime = interval;
+                }
+                sumTime += interval;
+                
                 output.append("Ended in ").append(interval).append("ms").append("\n\n");
 
                 if(!isSat && printProofMap) {
@@ -94,5 +114,13 @@ public class Main {
                 System.out.println(e.getMessage());
             }
         }
+        long endTimeGlobal = System.currentTimeMillis();
+        System.out.println("\nAll solved in " + ((endTimeGlobal - startTimeGlobal)/1000) + "s.\n");
+        System.out.println("--- Statistics on all files ---\n" +
+                "SAT problems: " + satProblems + "\n" +
+                "UNSAT problems: " + unsatProblems + "\n\n" +
+                "Min time: " + minTime + " ms\n" +
+                "Max time: " + maxTime + " ms\n" +
+                "Average time: " + (sumTime/numberOfProblems) + " ms");
     }
 }

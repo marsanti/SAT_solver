@@ -100,6 +100,9 @@ public class Utils {
             }
         }
 
+        String[] filepathPieces = filepath.split("\\.");
+        filepath = filepathPieces[0] + ".txt";
+
         File testFile = new File(filepath);
         File outFile = new File(outputDirectory, testFile.getName());
         assert outFile.exists() || outFile.createNewFile();
