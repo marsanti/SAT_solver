@@ -10,10 +10,12 @@ public class CDCL {
     private final ArrayList<Literal> model;
     private final ArrayList<Literal> decidedLiterals;
     private final Map<Literal, Clause> justification;
-    private final Map<ArrayList<Clause>, Clause> proofMapper;
+    public final Map<ArrayList<Clause>, Clause> proofMapper;
     private int k;
     private static final int VSIDS_LIMIT_FOR_DECAY = 2;
     private static final double DECAY_CONSTANT = 0.95;
+    public int n_decide_step;
+    public int n_conflict;
 
     public CDCL(Formula f) {
         this.formula = f;
@@ -21,11 +23,18 @@ public class CDCL {
         this.decidedLiterals = new ArrayList<>();
         this.justification = new HashMap<>();
         this.proofMapper = new HashMap<>();
-        k = 0;
+        this.k = 0;
+        this.n_decide_step = 0;
+        this.n_conflict = 0;
     }
     public ArrayList<Literal> getModel() {
         return model;
     }
+
+    /**
+     * Decide step: based on VSIDS map.
+     * @throws Exception if there are no literals left to be decided.
+     */
     private void decide() throws Exception {
         Map<Literal, Double> VSIDS = this.formula.getVSIDS();
         int sizeModel = this.model.size();
@@ -36,6 +45,7 @@ public class CDCL {
                 key.setLevel(this.decidedLiterals.size() + 1);
                 this.decidedLiterals.add(key);
                 this.model.add(key);
+                this.n_decide_step++;
                 return;
             }
         }
@@ -44,6 +54,10 @@ public class CDCL {
         }
     }
 
+    /**
+     * Unit propagation in FUIP.
+     * @return true if the model has changed.
+     */
     private boolean unitPropagate() {
         boolean changed = true;
         int initialModelSize = this.model.size();
@@ -67,6 +81,10 @@ public class CDCL {
         return initialModelSize != this.model.size();
     }
 
+    /**
+     * Two Watched Literals Technique propagation.
+     * @return an Object representing a conflict Clause if one was found or a boolean if the model has changed and no conflict clause has been found.
+     */
     private Object twoWatchedLit() {
         int modelSize = this.model.size();
         boolean changed = true;
@@ -88,29 +106,18 @@ public class CDCL {
         return modelSize != this.model.size();
     }
 
+    /**
+     * TWL util function:
+     * adjust the TwoWatchedLiterals array for each clause.
+     */
     private void adjustTWLArrays() {
         for(Clause c : this.formula.getClauses()) {
             c.fixTWLArray(this.model);
         }
     }
 
-    private ArrayList<Literal> getUnaryClauses() throws Exception {
-        ArrayList<Literal> unitLiterals = new ArrayList<>();
-        for(Clause c : this.formula.getClauses()) {
-            if (c.getLiterals().size() == 1) {
-                Literal l = c.getLiterals().get(0);
-                unitLiterals.add(l);
-                Literal notL = l.getNegate();
-                if(unitLiterals.contains(notL)) {
-                    throw new Exception("Conflict: there are two unary clauses that are opposite!");
-                }
-            }
-        }
-        return unitLiterals;
-    }
-
     /**
-     * if there is any conflict clause return it
+     * if there is any conflict clause return it.
      * @return Conflict clause or null
      */
     private Clause checkConflict() {
@@ -138,6 +145,10 @@ public class CDCL {
         return null;
     }
 
+    /**
+     * This function collects all the literals at the current level.
+     * @return ArrayList with the current level literals.
+     */
     private ArrayList<Literal> getCurrentLevelLiterals() {
         int currentLevel = this.decidedLiterals.size();
         ArrayList<Literal> newList = new ArrayList<>();
@@ -149,9 +160,16 @@ public class CDCL {
         return newList;
     }
 
+    /**
+     * This function does the explain step.
+     * it loops until the resolvent is an AssertionClause
+     * @param conflict the conflict clause
+     * @return the resolvent
+     */
     private Clause explain(Clause conflict) {
         int currentLevel = this.decidedLiterals.size();
         Clause resolvent = conflict;
+        this.n_conflict++;
 
         do {
             conflict = resolvent;
@@ -177,59 +195,25 @@ public class CDCL {
             }
         } while(resolvent.isAssertionClause(this.model, currentLevel));
 
+        System.out.println(resolvent);
+
         return resolvent;
     }
 
-
-    private Clause explainOld(Clause conflict) {
-//        for(Literal l : conflict.getLiterals()) {
-//            Literal notL = l.getNegate();
-//            if(this.justification.containsKey(notL)) {
-//                Clause justClause = this.justification.get(notL);
-//                Clause resolvent = conflict.getResolvent(justClause);
-//                ArrayList<Clause> parents = new ArrayList<>();
-//                parents.add(conflict);
-//                parents.add(justClause);
-//                this.proofMapper.put(parents, resolvent);
-//                return resolvent;
-//            }
-//        }
-//        return null;
-        int currentLevel = this.decidedLiterals.size();
-        Literal lastDecidedLiteral = this.decidedLiterals.get(this.decidedLiterals.size()-1);
-
-        for(Literal l : conflict.getLiterals()) {
-            // check if l is a key in the justification map
-            Literal litKey = null;
-            for(Literal key : this.justification.keySet()) {
-                if(key.equals(l.getNegate())) {
-                    litKey = key;
-                    break;
-                }
-            }
-            // if litKey is a key and it's at the current level then get resolvent
-            if(litKey != null && litKey.getLevel() == currentLevel) {
-                Clause justClause = this.justification.get(litKey);
-                Clause resolvent = conflict.getResolvent(justClause);
-                ArrayList<Clause> parents = new ArrayList<>();
-                parents.add(conflict);
-                parents.add(justClause);
-                this.proofMapper.put(parents, resolvent);
-                // recursive until the resolve clause contains the last decided lit
-                if(!resolvent.containsLiteral(lastDecidedLiteral.getNegate())) {
-                    return this.explain(resolvent);
-                } else {
-                    return resolvent;
-                }
-            }
-        }
-        return null;
-    }
-
+    /**
+     * Learn step: add the resolvent to the formula
+     * @param resolvent the resolvent clause
+     */
     private void learn(Clause resolvent) {
-        this.formula.addClause(resolvent);
+        if(!formula.containsClause(resolvent)) {
+            this.formula.addClause(resolvent);
+        }
     }
 
+    /**
+     * Backjump step: jump at the previous decided literals, negate it, and put it in the model with justification the resolvent.
+     * @param resolvent the resolvent for justification map
+     */
     private void backjump(Clause resolvent) {
         Literal lastDecidedLiteral = this.decidedLiterals.get(this.decidedLiterals.size()-1);
         this.decidedLiterals.remove(lastDecidedLiteral);
@@ -247,6 +231,10 @@ public class CDCL {
 
     }
 
+    /**
+     * "First Unique Implication Point" or "First Assertion Clause Heuristic".
+     * @throws Exception if an Exception is thrown then the formula is UNSAT, otherwise it's SAT
+     */
     private void FUIP() throws Exception {
         boolean sat = false;
         while((this.model.size() != this.formula.getNumberOfLiterals()) || !sat) {
@@ -261,6 +249,10 @@ public class CDCL {
         }
     }
 
+    /**
+     * Two Watched Literals technique.
+     * @throws Exception if an Exception is thrown then the formula is UNSAT, otherwise it's SAT
+     */
     private void TWL() throws Exception {
         boolean sat = false;
         while((this.model.size() != this.formula.getNumberOfLiterals()) || !sat) {
@@ -279,6 +271,11 @@ public class CDCL {
         }
     }
 
+    /**
+     * In this function we try to solve the conflict.
+     * We, also, handle the VSIDS map, increasing counters and each k steps we decay the values.
+     * @throws Exception if an Exception is thrown then the formula is UNSAT, otherwise it's SAT
+     */
     private void solveConflict(Clause conflict) throws Exception {
         this.formula.increaseVSIDSCounters(conflict);
         if(k >= VSIDS_LIMIT_FOR_DECAY) {
@@ -294,15 +291,21 @@ public class CDCL {
             if(resolvent == null) {
                 throw new Exception("Result: UNSATISFIABLE, Fail rule\nmodel: " + this.model +"\nConflict clause: " + conflict);
             }
-            Clause resNeg = resolvent.getNegate();
-            if(formula.containsClause(resNeg)) {
-                throw new Exception("Result: UNSATISFIABLE, Fail rule (resolvent in formula)\nmodel: " + this.model +"\nResolvent: " + resolvent);
+            if(resolvent.getLiterals().size() == 1 && formula.containsClause(resolvent.getNegate())) {
+                throw new Exception("Result: UNSATISFIABLE, Fail rule (Not resolvent (unary) in formula)\nmodel: " + this.model +"\nResolvent: " + resolvent);
             }
             this.learn(resolvent);
             this.backjump(resolvent);
         }
     }
 
+    /**
+     * Where all the magic starts.
+     * @param strategy FUIP or TWL
+     * @return true if SAT.
+     * @throws IllegalArgumentException if Strategy is not implemented.
+     * @throws Exception if UNSAT then an exception is thrown.
+     */
     public boolean findModel(Strategy strategy) throws Exception {
         switch (strategy) {
             case FUIP:
@@ -312,7 +315,7 @@ public class CDCL {
                 this.TWL();
                 break;
             default:
-                throw new Exception(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
+                throw new IllegalArgumentException(strategy + " not implemented yet!\n Available strategies: FUIP, TWL.");
         }
         return true;
     }

@@ -3,10 +3,10 @@ import utils.*;
 
 public class Main {
     public static void main(String[] args) {
-//         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat1.cnf");
+         Formula f = Utils.readFormulaFromFile("tests/lectureTests/unsat3.cnf");
 //        Formula f = Utils.readFormulaFromFile("tests/pigeon-7.cnf");
-        Formula f = Utils.readFormulaFromFile("tests/quinn.cnf");
-//         Formula f = Utils.readFormulaFromFile("tests/hardSat/uf20-013.cnf");
+//        Formula f = Utils.readFormulaFromFile("tests/test3.cnf");
+//         Formula f = Utils.readFormulaFromFile("tests/hardSat/uf20-01.cnf");
 //        Formula f = Utils.readFormulaFromFile("tests/hardUnsat/uuf50-07.cnf");
 
         try {
