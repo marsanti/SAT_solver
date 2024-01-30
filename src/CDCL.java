@@ -276,14 +276,14 @@ public class CDCL {
             k++;
         }
         if(this.decidedLiterals.isEmpty()) {
-            throw new Exception("Result: UNSATISFIABLE, conflict at level 0\nmodel: " + this.model +"\nConflict clause: " + conflict);
+            throw new Exception("Result: UNSATISFIABLE, conflict at level 0\nConflict clause: " + conflict + "\n\nmodel: " + this.model + "\nmodel size: " + this.model.size() + "\n");
         } else {
             Clause resolvent = this.explain(conflict);
             if(resolvent == null) {
-                throw new Exception("Result: UNSATISFIABLE, Fail rule\nmodel: " + this.model +"\nConflict clause: " + conflict);
+                throw new Exception("Result: UNSATISFIABLE, Fail rule\nConflict clause: " + conflict + "\n\nmodel: " + this.model + "\nmodel size: " + this.model.size() + "\n");
             }
             if(resolvent.getLiterals().size() == 1 && formula.containsClause(resolvent.getNegate())) {
-                throw new Exception("Result: UNSATISFIABLE, Fail rule (Not resolvent (unary) in formula)\nmodel: " + this.model +"\nResolvent: " + resolvent);
+                throw new Exception("Result: UNSATISFIABLE, Fail rule (Not resolvent (unary) in formula)\nResolvent: " + resolvent + "\n\nmodel: " + this.model + "\nmodel size: " + this.model.size() + "\n");
             }
             this.learn(resolvent);
             this.backjump(resolvent);
