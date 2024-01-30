@@ -170,12 +170,13 @@ public class CDCL {
     private Clause explain(Clause conflict) {
         int currentLevel = this.decidedLiterals.size();
         Clause resolvent = conflict;
-        this.n_conflict++;
+
 
         ArrayList<Literal> currentLiterals = getCurrentLevelLiterals();
         Collections.reverse(currentLiterals);
 
         do {
+            this.n_conflict++;
             conflict = resolvent;
             Literal lit = currentLiterals.get(0);
             if(this.decidedLiterals.contains(lit)) return resolvent;
