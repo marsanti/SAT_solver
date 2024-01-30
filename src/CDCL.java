@@ -195,8 +195,6 @@ public class CDCL {
             }
         } while(resolvent.isAssertionClause(this.model, currentLevel));
 
-        System.out.println(resolvent);
-
         return resolvent;
     }
 

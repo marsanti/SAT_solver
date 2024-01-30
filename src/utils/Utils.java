@@ -4,11 +4,20 @@ import structure.Clause;
 import structure.Formula;
 import structure.Literal;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Utils {
+    /**
+     * Read the content of a file and convert it into a Formula object.
+     * @param path path to file
+     * @return Formula object
+     */
     public static Formula readFormulaFromFile(String path) {
         Formula formula = new Formula();
 
@@ -29,9 +38,9 @@ public class Utils {
                         commentBuilder.append(" ");
                     } 
                     String comment = commentBuilder.toString().trim();
-                    if(data_split.length > 1) {
-                        System.out.printf("comment found: %s%n", comment);
-                    }
+//                    if(data_split.length > 1) {
+//                        System.out.printf("comment found: %s%n", comment);
+//                    }
                 } else if(data_split[0].equals("p")) {
                     formula.setNumberOfLiterals(Integer.parseInt(data_split[2]));
                     formula.setNumberOfClauses(Integer.parseInt(data_split[3]));
@@ -58,5 +67,40 @@ public class Utils {
         formula.initVSIDS();
 
         return formula;
+    }
+
+    /**
+     * Fetch all files in a specific folder.
+     * @param pathToFolder that contains .cnf files
+     * @return ArrayList of String containing file paths
+     * @throws Exception if pathToFolder is null or empty
+     */
+    public static ArrayList<String> readFilesFromFolder(String pathToFolder) throws Exception {
+        if(pathToFolder == null || pathToFolder.isEmpty()) {
+            throw new Exception("No path to folder found!");
+        }
+
+        return Stream.of(Objects.requireNonNull(new File(pathToFolder).listFiles()))
+                .filter(file -> !file.isDirectory())
+                .map(File::getPath).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public static void saveOutputContent(String filepath, String output) throws IOException {
+        File outputDirectory = new File("output_tests");
+        if(!outputDirectory.exists()) {
+            assert outputDirectory.mkdir();
+        }
+
+        File testFile = new File(filepath);
+        File outFile = new File(outputDirectory, testFile.getName());
+        assert outFile.exists() || outFile.createNewFile();
+
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFile.getPath()), StandardCharsets.UTF_8))) {
+            writer.write(output);
+        }
+        catch (IOException ex) {
+            // Handle me
+            System.out.println("something went wrong writing the output file: " + ex.getMessage());
+        }
     }
 }

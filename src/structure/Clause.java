@@ -81,7 +81,7 @@ public class Clause {
             Literal lit = this.literals.get(i);
             str.append(lit.toString());
             if (i < this.literals.size() - 1) {
-                str.append(" ∨ ");
+                str.append(" v ");
             }
         }
 
@@ -90,6 +90,11 @@ public class Clause {
         return str.toString();
     }
 
+    /**
+     * Use this function in order to get the resolvent.
+     * @param c the justification clause
+     * @return the resolvent
+     */
     public Clause getResolvent(Clause c) {
         Clause resolvent = new Clause();
         ArrayList<Literal> allLit = new ArrayList<>(this.getLiterals());
@@ -154,6 +159,11 @@ public class Clause {
         }
     }
 
+    /**
+     * Two Watched Literals technique for propagation.
+     * @param model the current model
+     * @return Object that could be a Literal if a clause has only one Literal Undefined, boolean if everything is ok
+     */
     public Object watchTwoLiterals(ArrayList<Literal> model) {
         this.checkForFalsifiedElements(model);
         Object response = initTwoWatchedLiterals(model);
@@ -222,7 +232,6 @@ public class Clause {
             }
         }
 
-        // all the literals are false
         return true;
     }
 

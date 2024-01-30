@@ -122,7 +122,7 @@ public class Formula {
         for (int i = 0; i < this.clauses.size(); i++) {
             str.append(this.clauses.get(i).toString());
             if (i < this.clauses.size() - 1) {
-                str.append(" ∧ ");
+                str.append(" && ");
             }
         }
 
