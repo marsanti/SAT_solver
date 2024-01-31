@@ -1,4 +1,5 @@
 c  unsat3.cnf
+c lecture exercise
 c
 p cnf 4 7
 1 2 0
