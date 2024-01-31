@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -z $1 ]] || [[ ! -z $5 ]];
+if [[ -z $1 ]] || [[ $# -gt 4 ]] || [[ ( $1 != "-help" ) && ( $# -lt 2 ) ]];
 then
     echo "Wrong usage: ./script.sh -help"
 else
@@ -8,23 +8,8 @@ else
     then
         echo "Using script you need to substitute SAT_solver.jar with ./script.sh in order to use the script."
         echo
-        java -jar SAT_solver.jar "$1"
+        java -jar SAT_solver.jar "$@"
     else
-        if [[ -z $2 ]];
-        then 
-            if [[ -z $3 ]];
-            then 
-                if [[ -z $4 ]];
-                then 
-                    java -jar SAT_solver.jar "$1" "$2" "$3" "$4"
-                else
-                    java -jar SAT_solver.jar "$1" "$2" "$3"
-                fi
-            else
-                java -jar SAT_solver.jar "$1" "$2"
-            fi
-        else
-            echo "Wrong usage: ./script.sh -help"
-        fi
+        java -jar SAT_solver.jar "$@"
     fi
 fi
